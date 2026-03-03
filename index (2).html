@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YEEZUS AR - La Trascendencia de lo Inevitable</title>
+  <!-- Libreria A-frame -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <!-- libreria de Ar.js -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; }
+
+    /* Botones flotantes sobre la escena AR */
+    #controls {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 9999;
+    }
+
+    #controls button {
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      padding: 10px 20px;
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #controls button.active {
+      background: rgba(204, 34, 34, 0.85);
+      border-color: #cc2222;
+    }
+
+    #controls button:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* Mensaje cuando no hay marcador */
+    #hint {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      color: rgba(255,255,255,0.7);
+      font-family: monospace;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      z-index: 9999;
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- UI de botones -->
+  <div id="controls">
+    <button id="btnVideo"   class="active" onclick="mostrar('video')">▶ Video</button>
+    <button id="btnImagen"  onclick="mostrar('imagen')">⊞ Imagen</button>
+    <button id="btnModelo"  onclick="mostrar('modelo')">◈ Modelo 3D</button>
+  </div>
+
+  <div id="hint">Apunta la cámara al afiche YEEZUS</div>
+
+  <!-- importante Recuerda eliminar el embedded a la hora de desplegar el proyecto -->
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono;"
+        vr-mode-ui="enabled: false">
+
+    <a-assets>
+      <!-- Modelo 3D de Kanye -->
+      <a-asset-item id="miModeloAR" src="ye_formerly_known_as_kanye_west.glb"></a-asset-item>
+
+      <!-- Video -->
+      <video id="kanyeVideo"
+        src="kanye_video_clase.mp4"
+        loop="true"
+        crossorigin="anonymous"
+        playsinline
+        webkit-playsinline
+        preload="auto">
+      </video>
+
+      <!-- Imagen yeezus -->
+      <img id="yeezusImg" src="yeezus.png" crossorigin="anonymous">
+
+      <!-- Imagen el yeeeee -->
+      <img id="elYeImg" src="el_yeeeee.png" crossorigin="anonymous">
+    </a-assets>
+
+    <!-- reemplaza la url por la ruta del marcador en formato .patt -->
+    <a-marker type="pattern" url="yeezus.patt" id="mainMarker">
+
+      <!-- VIDEO -->
+      <a-video
+        id="arVideo"
+        src="#kanyeVideo"
+        position="0 0.01 0"
+        rotation="-90 0 0"
+        width="2.4"
+        height="1.35"
+        visible="true">
+      </a-video>
+
+      <!-- IMAGEN yeezus.png -->
+      <a-image
+        id="arImagen"
+        src="#yeezusImg"
+        position="0 0.01 0"
+        rotation="-90 0 0"
+        width="2"
+        height="2.8"
+        visible="false">
+      </a-image>
+
+      <!-- MODELO 3D -->
+      <a-entity
+        id="arModelo"
+        gltf-model="#miModeloAR"
+        position="0 0 0"
+        rotation="0 0 0"
+        scale="0.5 0.5 0.5"
+        visible="false"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 4000">
+      </a-entity>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+
+  </a-scene>
+
+  <script>
+    const video   = document.getElementById('kanyeVideo');
+    const hint    = document.getElementById('hint');
+    const marker  = document.getElementById('mainMarker');
+
+    // Estado actual
+    let modoActual = 'video';
+
+    function mostrar(modo) {
+      modoActual = modo;
+
+      // Actualizar botones
+      document.getElementById('btnVideo').classList.toggle('active',  modo === 'video');
+      document.getElementById('btnImagen').classList.toggle('active', modo === 'imagen');
+      document.getElementById('btnModelo').classList.toggle('active', modo === 'modelo');
+
+      // Mostrar / ocultar elementos AR
+      document.getElementById('arVideo').setAttribute('visible',  modo === 'video');
+      document.getElementById('arImagen').setAttribute('visible', modo === 'imagen');
+      document.getElementById('arModelo').setAttribute('visible', modo === 'modelo');
+
+      // Manejo del video
+      if (modo === 'video') {
+        video.play().catch(e => console.log('Autoplay bloqueado:', e));
+      } else {
+        video.pause();
+      }
+    }
+
+    // Detectar marcador
+    marker.addEventListener('markerFound', () => {
+      console.log('Marcador detectado');
+      hint.style.opacity = '0';
+      if (modoActual === 'video') {
+        video.play().catch(e => console.log('Autoplay bloqueado:', e));
+      }
+    });
+
+    marker.addEventListener('markerLost', () => {
+      console.log('Marcador perdido');
+      hint.style.opacity = '1';
+      video.pause();
+    });
+  </script>
+
+</body>
+</html>
